@@ -1,7 +1,7 @@
 import os
 import requests
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 def gerar_documentacao(caminho_arquivo):
     try:
