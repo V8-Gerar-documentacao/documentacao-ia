@@ -1,5 +1,9 @@
 import os
 import requests
+import time
+from dotenv import load_dotenv
+
+load_dotenv()  # <- isso carrega o .env
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
@@ -26,16 +30,22 @@ Script ou código:
             "temperature": 0.4
         }
 
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=data
-        )
+        for tentativa in range(5):  # tenta no máximo 5 vezes
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=data
+            )
 
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
-        else:
-            raise Exception(f"Erro {response.status_code}: {response.text}")
+            if response.status_code == 200:
+                return response.json()["choices"][0]["message"]["content"]
+            elif response.status_code == 429:
+                print("Limite de tokens excedido. Aguardando 6 segundos...")
+                time.sleep(6)  # espera e tenta de novo
+            else:
+                raise Exception(f"Erro {response.status_code}: {response.text}")
+
+        raise Exception("Limite de tentativas excedido.")
 
     except Exception as e:
         return f"Erro ao gerar documentação: {e}"
