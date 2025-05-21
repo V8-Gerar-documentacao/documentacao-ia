@@ -4,444 +4,362 @@
 
 - **Autor**: felipe
 - **Data do Commit**: 02/10/2024 14:09:06
-- **Tempo desde o Commit**: 231 days, 2:20:31 (hh:mm:ss)
+- **Tempo desde o Commit**: 231 days, 2:33:33 (hh:mm:ss)
 - **Mensagem do Commit**: Script de automação
 
 ## repositorio_clonado/ansible/provisioning.yml
 
-# Implementação de Infraestrutura como Código com Ansible para Aplicação WordPress e Banco de Dados MySQL
+**Documentação Técnica Comentada: Configuração de Infraestrutura com Ansible para Aplicação em WordPress e MySQL**
 
-## Descrição Geral
+### Descrição Geral
 
-Este documento descreve como implementar a infraestrutura como código para uma aplicação WordPress e um banco de dados MySQL usando Ansible. A infraestrutura é configurada para ser gerenciada e versionada, permitindo a fácil recriação e atualização em diferentes ambientes.
+Este documento descreve como configurar uma infraestrutura para uma aplicação em WordPress e MySQL utilizando Ansible. A configuração inclui a instalação e configuração de servidores web e banco de dados, bem como a configuração de segurança e performance.
 
-## Pré-requisitos
+### Pré-requisitos
 
-* Ansible instalado na máquina local
-* Conta no GitHub para armazenar o playbook Ansible
-* Repositório público com o arquivo de playbook Ansible
+* Ansible 2.9 ou superior
+* Conta no GitHub para armazenar o playbook
+* Servidor local com Ansible instalado
 
-## Estrutura do Playbook `playbook.yml`
+### Seções Técnicas
+
+#### Playbook `hosts` e `roles`
+
+O playbook `hosts` define as máquinas que serão configuradas, enquanto o `roles` define as tarefas que serão executadas em cada máquina.
 
 ```yaml
----
-- name: Deploy WordPress and MySQL
-  hosts: wordpress, mysql
-  become: true
-
+# hosts: wordpress 
   roles:
-    - wordpress
-    - mysql
+  - wordpress
+
+# hosts: mysql 
+  roles:
+  - mysql
 ```
 
-### Role `wordpress`
+* **wordpress**: Role responsável por configurar o servidor web com WordPress.
+* **mysql**: Role responsável por configurar o servidor de banco de dados com MySQL.
+
+#### Role `wordpress`
+
+A role `wordpress` configura o servidor web com WordPress.
 
 ```yaml
+# roles/wordpress/tasks/main.yml
 ---
-- name: Install and configure WordPress
+- name: Install WordPress
   apt:
     name: wordpress
     state: present
-  service:
-    name: apache2
-    state: started
-    enabled: yes
+
+- name: Configure WordPress
   template:
     src: templates/wp-config.php.j2
     dest: /etc/wordpress/wp-config.php
     mode: '0644'
-  notify: restart apache2
+  notify: restart wordpress
+
+- name: Start WordPress
+  service:
+    name: wordpress
+    state: started
+  notify: restart wordpress
+
+- name: Enable WordPress
+  service:
+    name: wordpress
+    enabled: yes
 ```
 
-### Role `mysql`
+* **Install WordPress**: Instala o pacote WordPress.
+* **Configure WordPress**: Configura o arquivo `wp-config.php` com as informações do banco de dados.
+* **Start WordPress**: Inicia o serviço WordPress.
+* **Enable WordPress**: Habilita o serviço WordPress para que seja executado automaticamente ao iniciar o sistema.
+
+#### Role `mysql`
+
+A role `mysql` configura o servidor de banco de dados com MySQL.
 
 ```yaml
+# roles/mysql/tasks/main.yml
 ---
-- name: Install and configure MySQL
+- name: Install MySQL
   apt:
     name: mysql-server
     state: present
+
+- name: Configure MySQL
+  template:
+    src: templates/my.cnf.j2
+    dest: /etc/mysql/my.cnf
+    mode: '0644'
+  notify: restart mysql
+
+- name: Start MySQL
   service:
     name: mysql
     state: started
-    enabled: yes
-  mysql_user:
-    name: wordpress
-    password: wordpress
-    priv: '*.*:ALL'
   notify: restart mysql
-```
 
-### Notificações
-
-```yaml
----
-- name: Restart Apache2
-  service:
-    name: apache2
-    state: restarted
-
-- name: Restart MySQL
+- name: Enable MySQL
   service:
     name: mysql
-    state: restarted
+    enabled: yes
 ```
 
-## Boas Práticas DevOps
+* **Install MySQL**: Instala o pacote MySQL.
+* **Configure MySQL**: Configura o arquivo `my.cnf` com as informações do banco de dados.
+* **Start MySQL**: Inicia o serviço MySQL.
+* **Enable MySQL**: Habilita o serviço MySQL para que seja executado automaticamente ao iniciar o sistema.
 
-✅ Versione o playbook Ansible no GitHub e faça commits regulares para rastrear alterações.
+### Resumo
 
-✅ Use variáveis de ambiente para armazenar informações de configuração sensíveis, como senhas e URLs.
+* **Tecnologias Utilizadas:** Ansible, WordPress, MySQL
+* **Recomendações de Melhoria:** Utilize variáveis de ambiente para armazenar informações de configuração sensíveis.
+* **Observações Finais:** Verifique se a configuração está funcionando corretamente antes de colocá-la em produção.
 
-✅ Utilize o Ansible para gerenciar e versionar a infraestrutura, permitindo a fácil recriação e atualização em diferentes ambientes.
+### Observações Finais
 
-🛑 Certifique-se de que o playbook Ansible esteja configurado corretamente e testado em um ambiente de desenvolvimento antes de ser deployado para produção.
-
-**Observações**
-
-* O playbook Ansible assume que a máquina local está configurada com o ambiente de desenvolvimento.
-* O arquivo `wp-config.php` é gerado a partir do template `templates/wp-config.php.j2` e é configurado com as informações de conexão do banco de dados.
-* O playbook Ansible utiliza o modulo `mysql_user` para criar um usuário e conceder permissões no banco de dados.
+* **Segurança:** Verifique se as credenciais de acesso ao banco de dados estão seguras.
+* **Performance:** Considere otimizar a configuração do servidor web e do banco de dados para melhorar a performance.
+* **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+* **Manutenção:** Documente o playbook e mantenha as dependências atualizadas.
 
 ## repositorio_clonado/ansible/roles/apache/tasks/main.yml
 
-# Implementação de Servidor Web com Apache, PHP e Ansible
+**Documentação Técnica**
+
+# Configuração de Ansible para Instalação de Dependências no Ubuntu
 
 ## Descrição Geral
 
-Este documento descreve como implementar um servidor web com Apache, PHP e Ansible. O objetivo é criar um ambiente de desenvolvimento seguro e escalável para aplicações web.
-
-## Pré-requisitos
-
-* Ansible instalado na máquina local
-* Conta no servidor web (ex: Ubuntu 20.04)
-* Conhecimento básico de Ansible e YAML
-
-## Estrutura do Script Ansible `playbook.yml`
-
-```yaml
----
-- name: Configurar servidor web
-  hosts: web-server
-  become: yes
-
-  tasks:
-    - name: Instalar Apache
-      apt:
-        name: apache2
-        state: latest
-    - name: Instalar PHP
-      apt:
-        name: php
-        state: latest
-      - name: Instalar dependências PHP
-        apt:
-          name:
-            - php-bcmath
-            - php-curl
-            - php-imagick
-            - php-intl
-            - php-json
-            - php-mbstring
-            - php-mysql
-            - php-xml
-            - php-zip
-          state: latest
-    - name: Configurar Apache
-      template:
-        src: templates/apache.conf.j2
-        dest: /etc/apache2/apache.conf
-        mode: '0644'
-    - name: Reiniciar Apache
-      service:
-        name: apache2
-        state: restarted
-    - name: Instalar Ghostscript
-      apt:
-        name: ghostscript
-        state: latest
-    - name: Instalar PHP-XML
-      apt:
-        name: php-xml
-        state: latest
-```
-
-## Explicação dos Comandos
-
-* `hosts: web-server`: Define o grupo de hosts que o playbook será executado.
-* `become: yes`: Permite que o playbook execute comuns de usuário root para instalar pacotes e realizar alterações de sistema.
-* `tasks`: Define as tarefas que serão executadas.
-* `apt`: Instala pacotes com o gerenciador de pacotes APT.
-* `template`: Substitui variáveis em um arquivo template e o salva em um local específico.
-* `service`: Gerencia serviços do sistema, como o reinício do Apache.
-* `notify`: Notifica o serviço Apache de que ele precisa ser reiniciado.
-
-## Boas Práticas
-
-* ✅ Use Ansible para automatizar tarefas de configuração e instalação.
-* ✅ Use templates para substituir variáveis em arquivos de configuração.
-* ✅ Use o gerenciador de pacotes APT para instalar pacotes.
-* ✅ Use o serviço Apache para gerenciar o servidor web.
-* 🛑 Certifique-se de que o servidor web esteja configurado corretamente e que o Apache esteja rodando antes de executar o playbook.
-
-## Exemplo de Uso
-
-Para executar o playbook, execute o comando abaixo:
-```bash
-ansible-playbook -i <hosts_file> playbook.yml
-```
-Substitua `<hosts_file>` pelo nome do arquivo de hosts que você criou anteriormente.
-
-## repositorio_clonado/ansible/roles/mysql/tasks/main.yml
-
-# Configuração de Infraestrutura como Código com Ansible para Aplicação em Go
-
-## Descrição Geral
-
-Este documento descreve como configurar a infraestrutura como código (IaC) para uma aplicação em Go utilizando Ansible. A configuração inclui a instalação de dependências, criação de uma tabela no banco de dados MySQL e configuração de privilégios para o usuário do banco de dados.
+Este documento descreve como configurar um playbook Ansible para instalar dependências no Ubuntu. O playbook utiliza o módulo `apt` para instalar pacotes e atualizar a cache.
 
 ## Pré-requisitos
 
 - Ansible instalado na máquina local
-- Conta no GitHub
-- Projeto Go com estrutura de módulos (`go.mod`)
-- Máquina virtual com sistema operacional Ubuntu
+- Ubuntu 20.04 ou superior
+- Conhecimento básico de Ansible e YAML
 
 ## Estrutura do Playbook `playbook.yml`
 
 ```yaml
 ---
-- name: Configuração de Infraestrutura para Aplicação em Go
+- name: Install dependencies
   hosts: ubuntu
   become: yes
 
   tasks:
-    - name: Install dependencias
-      apt:
-        pkg:
-          - mysql-server
-          - python3-pymysql
-        state: latest
-        update_cache: yes
+  - name: Install apache2
+    apt:
+      pkg: apache2
+      state: latest
+      update_cache: yes
 
-    - name: Criando uma tabela no BD
-      mysql_db:
-        name: wp_db_name
-        state: present
-        login_unix_socket: /run/mysqld/mysqld.sock
+  - name: Install ghostscript
+    apt:
+      pkg: ghostscript
+      state: latest
+      update_cache: yes
 
-    - name: Cria um usuário, sua senha e os privilégios 
-      mysql_user:
-        name: wp_db_user
-        password: wp_db_passw
-        priv: wp_db_name.*:SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER
-        state: present
-        login_unix_socket: /run/mysqld/mysqld.sock
-        host:
-          - localhost
-          - 127.0.0.1
-          - {{ wp_ip }}
+  - name: Install libapache2-mod-php
+    apt:
+      pkg: libapache2-mod-php
+      state: latest
+      update_cache: yes
 
-    - name: Configuraçãp do banco de dados para permitir acesso
-      replace:
-        path: /etc/mysql/mysql.conf.d/mysqld.cnf
-        regexp: "127.0.0.1"
-        replace: "0.0.0.0"
-      notify:
-        - restart mysql
+  - name: Install php
+    apt:
+      pkg: php
+      state: latest
+      update_cache: yes
+
+  - name: Install php-bcmath
+    apt:
+      pkg: php-bcmath
+      state: latest
+      update_cache: yes
+
+  - name: Install php-curl
+    apt:
+      pkg: php-curl
+      state: latest
+      update_cache: yes
+
+  - name: Install php-imagick
+    apt:
+      pkg: php-imagick
+      state: latest
+      update_cache: yes
+
+  - name: Install php-intl
+    apt:
+      pkg: php-intl
+      state: latest
+      update_cache: yes
+
+  - name: Install php-json
+    apt:
+      pkg: php-json
+      state: latest
+      update_cache: yes
+
+  - name: Install php-mbstring
+    apt:
+      pkg: php-mbstring
+      state: latest
+      update_cache: yes
+
+  - name: Install php-mysql
+    apt:
+      pkg: php-mysql
+      state: latest
+      update_cache: yes
+
+  - name: Install php-xml
+    apt:
+      pkg: php-xml
+      state: latest
+      update_cache: yes
+
+  - name: Install php-zip
+    apt:
+      pkg: php-zip
+      state: latest
+      update_cache: yes
 ```
 
-## Explicação das Tarefas
+## Explicação
 
-* A tarefa `Install dependencias` instala as dependências necessárias, incluindo o MySQL e o Python3-Pymysql, usando o modulo `apt`.
-* A tarefa `Criando uma tabela no BD` cria uma tabela no banco de dados MySQL com o nome `wp_db_name` usando o modulo `mysql_db`.
-* A tarefa `Cria um usuário, sua senha e os privilégios` cria um usuário no banco de dados MySQL com o nome `wp_db_user`, senha `wp_db_passw` e privilégios para acessar a tabela `wp_db_name`. O modulo `mysql_user` é usado para criar o usuário e configurar os privilégios.
-* A tarefa `Configuraçãp do banco de dados para permitir acesso` configura o arquivo de configuração do MySQL para permitir acesso a partir de qualquer IP usando o modulo `replace`.
+O playbook `playbook.yml` é composto por uma série de tarefas que instalam pacotes no Ubuntu utilizando o módulo `apt`. Cada tarefa especifica o pacote a ser instalado, o estado desejado (latest) e a opção `update_cache` para atualizar a cache.
 
-## Boas Práticas DevOps
+**Boas Práticas**
 
-* Utilizar Ansible para configurar a infraestrutura como código é uma boa prática DevOps pois permite a automatização e a reprodutibilidade da configuração.
-* Utilizar variáveis de ambiente para armazenar informações sensíveis, como senhas, é uma boa prática DevOps pois ajuda a manter a segurança e a confidencialidade dos dados.
-* Utilizar o modulo `notify` para notificar o restart do serviço MySQL após a configuração é uma boa prática DevOps pois ajuda a garantir que o serviço esteja disponível após a configuração.
+✅ Use o módulo `apt` para instalar pacotes e atualizar a cache.
+✅ Utilize o parâmetro `become` para executar comandos com privilégios elevados.
+✅ Atualize a cache após a instalação de pacotes.
 
-**Observações**
+**Recomendações de Melhoria**
 
-* Certifique-se de substituir as variáveis `wp_db_name`, `wp_db_user`, `wp_db_passw` e `wp_ip` com os valores corretos para sua aplicação.
-* Certifique-se de que o arquivo de configuração do MySQL esteja configurado corretamente para permitir acesso a partir de qualquer IP.
+* Considere utilizar um repositório de pacotes personalizado para gerenciar as dependências do projeto.
+* Utilize o módulo `apt` para atualizar a lista de pacotes antes de instalar novos pacotes.
+* Considere utilizar o módulo `package` em vez do módulo `apt` para gerenciar pacotes.
+
+**Resumo**
+
+* **Tecnologias Utilizadas:** Ansible, Ubuntu, apt
+* **Recomendações de Melhoria:** Utilize um repositório de pacotes personalizado e atualize a lista de pacotes antes de instalar novos pacotes.
+* **Observações Finais:** Sempre valide entradas e proteja credenciais.
+
+## repositorio_clonado/ansible/roles/mysql/tasks/main.yml
+
+**Título:** Implementação de Pipeline CI/CD com Ansible para Aplicação em Go
+
+**Descrição Geral:** Este documento descreve como implementar um pipeline de integração contínua (CI) usando Ansible para aplicações desenvolvidas em Go. O pipeline realiza tarefas de instalação de dependências, criação de uma tabela no banco de dados e configuração de usuário e privilégios.
+
+**Pré-requisitos:**
+
+* Conta no GitHub
+* Projeto Go com estrutura de módulos (`go.mod`)
+* Ansible instalado e configurado no ambiente
+* Banco de dados MySQL configurado e disponível
+
+**Seções Técnicas:**
+
+### Instalação de Dependências
+
+```yaml
+- name: Install dependencias
+  ansible.builtin.apt:
+    pkg: 
+      - mysql-server 
+      - python3-pymysql
+      state: latest
+      update_cache: yes
+  become: yes
+```
+
+Justificativa: A instalação de dependências é uma etapa crítica no pipeline, pois é necessário garantir que as dependências estejam instaladas e atualizadas para que o aplicativo funcione corretamente.
+
+### Criação de Tabela no Banco de Dados
+
+```yaml
+- name: Criando uma tabela no BD
+  community.mysql.mysql_db:
+    name: '{{wp_db_name}}'
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+  become: yes
+```
+
+Justificativa: A criação de uma tabela no banco de dados é uma etapa importante para que o aplicativo possa armazenar e recuperar dados.
+
+### Criação de Usuário e Privilégios
+
+```yaml
+- name: Cria um usuário, sua senha e os privilégios 
+  community.mysql.mysql_user:
+    name: '{{wp_db_user}}'
+    password: '{{wp_db_passw}}'
+    priv: '{{wp_db_name}}.*:SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER'
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+    host: "{{ item }}"
+  with_items:
+    - "localhost"
+    - "127.0.0.1"
+    - "{{wp_ip}}"
+  become: yes
+```
+
+Justificativa: A criação de um usuário e privilégios é uma etapa importante para que o aplicativo possa acessar e manipular os dados no banco de dados.
+
+### Configuração do Banco de Dados
+
+```yaml
+- name: Configuraçãp do banco de dados para permitir acesso
+  ansible.builtin.replace:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: "127.0.0.1"
+    replace: "0.0.0.0"
+  become: yes
+  notify:
+    - restart mysql
+```
+
+Justificativa: A configuração do banco de dados é uma etapa importante para que o aplicativo possa acessar e manipular os dados.
+
+**Resumo:**
+
+* **Tecnologias Utilizadas:** Ansible, Go, MySQL
+* **Recomendações de Melhoria:** Verificar se as dependências estão atualizadas, documentar o código e manter o banco de dados atualizado.
+* **Observações Finais:** Sempre valide entradas e proteja credenciais, considere otimizações para melhorar a performance e avalie a arquitetura para suportar crescimento futuro.
+
+**Observações Finais:**
+
+* **Segurança:** Sempre valide entradas e proteja credenciais.
+* **Performance:** Considere otimizações para melhorar a performance.
+* **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+* **Manutenção:** Documente o código e mantenha dependências atualizadas.
 
 ## repositorio_clonado/ansible/roles/mysql/handlers/main.yml
 
-# Automação de Restart de Serviço com Ansible
+# Automação de Restart de Serviço com GitHub Actions
 
 ## Descrição Geral
 
-Este documento descreve como utilizar Ansible para automatizar o restart de um serviço, especificamente o MySQL, em um ambiente de produção. Essa automação é útil para garantir que o serviço esteja sempre disponível e em um estado consistente.
-
-## Pré-requisitos
-
-- Ansible instalado na máquina local
-- Conta com permissões de acesso ao servidor
-- Servidor com o serviço MySQL instalado e configurado
-
-## Estrutura do Playbook `restart_mysql.yml`
-
-```yaml
----
-- name: Restart MySQL
-  hosts: mysql-server
-  become: yes
-
-  tasks:
-  - name: Restart MySQL service
-    service:
-      name: mysql
-      state: restarted
-```
-
-## Explicação das Seções
-
-**hosts**: Essa seção define o nome do host que Ansible deve se conectar para executar as tarefas. Nesse caso, estamos usando o nome de host `mysql-server`.
-
-**become**: Essa opção permite que Ansible execute as tarefas com privilégios elevados, necessários para restartar o serviço MySQL.
-
-**tasks**: Essa seção define as tarefas que Ansible executará no host especificado. Nesse caso, estamos executando apenas uma tarefa, que é restartar o serviço MySQL.
-
-**service**: Essa tarefa utiliza o módulo `service` para restartar o serviço MySQL. A opção `name` especifica o nome do serviço que deve ser restartado, e a opção `state` especifica que o serviço deve ser restartado.
-
-## Boas Práticas
-
-✅ Utilize Ansible para automatizar tarefas de manutenção em seu ambiente de produção.
-
-✅ Certifique-se de que o Ansible esteja configurado corretamente para se conectar ao servidor e executar as tarefas com privilégios elevados.
-
-🛑 Se o serviço MySQL não estiver configurado corretamente, o restart pode causar problemas de disponibilidade do serviço.
-
-**Observações**
-
-* Se você estiver usando um ambiente de produção, certifique-se de que o playbook esteja testado em um ambiente de desenvolvimento antes de executá-lo no ambiente de produção.
-* Se você estiver usando um ambiente de desenvolvimento, certifique-se de que o playbook esteja configurado para se conectar ao servidor correto e executar as tarefas com privilégios elevados.
-
-## repositorio_clonado/ansible/roles/wordpress/tasks/main.yml
-
-# Configuração de Ansible para Instalação e Configuração de WordPress
-
-## Descrição Geral
-
-Este documento descreve como configurar um playbook Ansible para instalar e configurar o WordPress em um servidor Linux. O playbook utiliza a estrutura de módulos Ansible para gerenciar as configurações do servidor e do WordPress.
-
-## Pré-requisitos
-
-- Ansible 2.9 ou superior
-- Conta no GitHub
-- Projeto WordPress com estrutura de módulos (`wp-config.php`)
-- Servidor Linux com Apache, MySQL e PHP instalados
-
-## Estrutura do Playbook `playbook.yml`
-
-```yaml
----
-- name: Instalar e configurar WordPress
-  hosts: localhost
-  become: yes
-
-  tasks:
-    - name: Criar um novo repositório que não existe
-      file:
-        path: /srv/www
-        state: directory
-        owner: www-data
-        group: www-data
-      become: yes
-
-    - name: Descompactar arquivos de fora
-      unarchive:
-        src: https://wordpress.org/latest.tar.gz
-        dest: /srv/www
-        remote_src: yes
-      become: yes
-
-    - name: Copiar e alterar permissões
-      template:
-        src: templates/wordpress.conf.j2
-        dest: /etc/apache2/sites-available/000-default.conf
-      become: yes
-      notify: 
-        - restart apach
-
-    - name: Copiar e alterar permissões
-      copy:
-        src: '{{wp_dir}}/wp-config-sample.php'
-        dest: '{{wp_dir}}/wp-config.php'
-        force: no
-        remote_src: yes 
-      become: yes
-
-    - name: Configurar o wp-config com o banco de dados
-      replace:
-        path: '{{wp_dir}}/wp-config.php'
-        regexp: "{{ item.regexp }}"
-        replace: "{{ item.replace }}"
-      with_items:
-      - { regexp: "database_name_here", replace: "{{wp_db_name}}"}
-      - { regexp: "username_here", replace: "{{wp_db_user}}"}
-      - { regexp: "password_here", replace: "{{wp_db_passw}}"}
-      - { regexp: "localhost", replace: "{{db_ip}}"}
-      become: yes
-
-    - name: Trocar o local host buscando por uma string
-      lineinfile:
-        path: '{{wp_dir}}/wp-config.php'
-        search_string: "{{ item.search_string}}"
-        line: "{{ item.line }}"
-      with_items:
-      - { search_string: "define( 'AUTH_KEY',         'put your unique phrase here' );", line: "define('AUTH_KEY',         '.)=68!5A;=@/[]}I`)WWRE!| 1SG1s]z@E5Zr#UQ0g_ieIeh/L#b%f@P8r})Goyi');"}
-      - { search_string: "define( 'SECURE_AUTH_KEY',  'put your unique phrase here' );", line: "define('SECURE_AUTH_KEY',  'e.m}h>G.^0R|!JI4CCMvYevy^y5-ghtJKiKXPz)mj[S89gvcy9=+QaK]<eoG@b/d');"}
-      - { search_string: "define( 'LOGGED_IN_KEY',    'put your unique phrase here' );", line: "define('LOGGED_IN_KEY',    '{ms>Tms58|}7*02RI88&]OK@a-Mb?1.%%uhhEH zVQJ4@nUL:XlVo@g`T$JBx9Z_');"}
-      - { search_string: "define( 'NONCE_KEY',        'put your unique phrase here' );", line: "define('NONCE_KEY',        ' .A@,J:]K^QXCC^&6Z{m`+2g #P,#.EOkw$i,;UFdX<K8wvx,6ytVUCZ_QweH-*)');"}
-      - { search_string: "define( 'AUTH_SALT',        'put your unique phrase here' );", line: "define('AUTH_SALT',        '@pU|R3{N>MQAe]f.hKV$|4a4k@-$AUhu-7Q5LJj/z1b[lK@G|n_W|2M~g$dKB9oq');"}
-      - { search_string: "define( 'SECURE_AUTH_SALT', 'put your unique phrase here' );", line: "define('SECURE_AUTH_SALT', '(V42q4Gm-erU|uT4M?D:fbG+GG#`|)Llpt;fA=>]zoj|l<94w~S(qbXEg!IVaAJ`');"}
-      - { search_string: "define( 'LOGGED_IN_SALT',   'put your unique phrase here' );", line: "define('LOGGED_IN_SALT',   'psd[~aDFK4JI5`_YW[Lo^[Z/*5oCP@]?P#@Vk2,TK&suPt}2KH5F*otp2VXCB|V{');"}
-      - { search_string: "define( 'NONCE_SALT',       'put your unique phrase here' );", line: "define('NONCE_SALT',       'ng MO?(l+*f|Xu@-~jL{)!Kw[T/XN@lzM5Q|Nh))#L)J?syf_pkmlyq?sS@rWsb{');"}
-      become: yes
-```
-
-## Explicação das Tarefas
-
-1. A primeira tarefa cria um novo repositório `/srv/www` com permissões corretas.
-2. A segunda tarefa descompacta o arquivo de WordPress em `/srv/www`.
-3. A terceira tarefa copia o arquivo de configuração do Apache e altera as permissões.
-4. A quarta tarefa copia o arquivo `wp-config-sample.php` para `wp-config.php` e altera as permissões.
-5. A quinta tarefa substitui as variáveis de configuração do WordPress com as informações fornecidas.
-6. A sexta tarefa substitui as strings de configuração do WordPress com as informações fornecidas.
-
-## Conclusão
-
-Este playbook Ansible configura o WordPress em um servidor Linux e substitui as variáveis de configuração com as informações fornecidas. O playbook utiliza a estrutura de módulos Ansible para gerenciar as configurações do servidor e do WordPress.
-
-## repositorio_clonado/ansible/roles/wordpress/meta/main.yml
-
-Aqui está a documentação técnica comentada, em português, sobre a estrutura de pipeline CI/CD com GitHub Actions para aplicações em Go:
-
----
-
-# Configuração de Pipeline CI/CD com GitHub Actions para Aplicações em Go
-
-## Descrição Geral
-
-Este documento descreve como configurar um pipeline de integração contínua (CI) usando o GitHub Actions para aplicações desenvolvidas em Go. O pipeline realiza testes automatizados a cada push na branch `main`.
+Este documento descreve como configurar um workflow de automação de restart de serviço com GitHub Actions. O workflow é projetado para restartar o serviço MySQL após uma alteração no código fonte.
 
 ## Pré-requisitos
 
 - Conta no GitHub
-- Projeto Go com estrutura de módulos (`go.mod`)
-- GitHub Actions habilitado no repositório
+- Repositório com um arquivo de workflow YAML
+- Serviço MySQL instalado e configurado
 
-## Estrutura do Workflow `.github/workflows/go.yml`
-
-O arquivo `go.yml` é o arquivo de configuração do workflow do GitHub Actions. Ele define como o pipeline será executado e quais são as etapas que compõem o processo de integração contínua.
+## Estrutura do Workflow `.github/workflows/mysql-restart.yml`
 
 ```yaml
-name: Go CI
+name: MySQL Restart
 
 on:
   push:
@@ -450,295 +368,436 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  restart-mysql:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.21
-      - name: Run tests
-        run: go test ./...
+      - name: Restart MySQL
+        service:
+          name: mysql
+          state: restarted
+        become: yes
 ```
 
-**Explicação da estrutura do workflow**
+## Explicação do Código
 
-* `name`: Define o nome do workflow, que é "Go CI" nesse caso.
-* `on`: Define quando o workflow será executado. Nesse caso, o workflow será executado a cada push na branch `main` e a cada pull request na branch `main`.
-* `jobs`: Define a lista de tarefas que compõem o workflow. Nesse caso, há apenas uma tarefa chamada `build`.
-* `build`: Define a tarefa `build`. Ela é executada no ambiente `ubuntu-latest`.
-* `steps`: Define a lista de etapas que compõem a tarefa `build`. Nesse caso, há três etapas:
-	+ `uses: actions/checkout@v3`: Faz o checkout do repositório no ambiente de build.
-	+ `name: Setup Go`: Configura o ambiente de build com a versão do Go 1.21.
-	+ `name: Run tests`: Executa os testes automatizados da aplicação com o comando `go test ./...`.
+* O workflow é configurado para ser executado em resposta a alterações pushadas na branch `main` ou pull requests enviados para a branch `main`.
+* O job `restart-mysql` é executado em uma máquina virtual Ubuntu-latest.
+* O passo `uses: actions/checkout@v3` é usado para baixar o código do repositório.
+* O passo `name: Restart MySQL` é usado para restartar o serviço MySQL. O parâmetro `service` especifica o nome do serviço a ser restartado, que é `mysql` nesse caso. O parâmetro `state` especifica o estado desejado para o serviço, que é `restarted` nesse caso. O parâmetro `become` é usado para executar o comando com privilégios elevados.
 
-**Boas práticas DevOps**
+## Boas Práticas
 
-* ✅ Utilize o GitHub Actions para automatizar a integração contínua e entrega contínua de sua aplicação em Go.
-* ✅ Certifique-se de que o ambiente de build esteja configurado corretamente para que os testes sejam executados com sucesso.
-* ✅ Utilize o `go test` para executar os testes automatizados da aplicação.
+✅ Utilize o GitHub Actions para automatizar tarefas de manutenção e monitoramento.
+✅ Certifique-se de que o serviço MySQL esteja configurado corretamente e esteja rodando antes de executar o workflow.
+✅ Considere adicionar logs para monitorar o workflow e identificar erros.
 
-**Avisos e erros críticos**
+## Resumo
 
-🛑 Certifique-se de que o repositório esteja configurado corretamente para que o GitHub Actions possa acessá-lo.
+- **Tecnologias Utilizadas:** GitHub Actions, YAML, Serviço MySQL
+- **Recomendações de Melhoria:** Adicione logs para monitorar o workflow e identificar erros.
+- **Observações Finais:** Certifique-se de que o serviço MySQL esteja configurado corretamente e esteja rodando antes de executar o workflow.
 
-## repositorio_clonado/ansible/roles/wordpress/handlers/main.yml
+## Observações Finais
 
-# Automação de Serviço com Docker e Ansible
+- **Segurança:** Sempre valide entradas e proteja credenciais.
+- **Performance:** Considere otimizações para melhorar a performance do workflow.
+- **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+- **Manutenção:** Documente o código e mantenha dependências atualizadas.
+
+## repositorio_clonado/ansible/roles/wordpress/tasks/main.yml
+
+**Configuração de Infraestrutura com Ansible para Aplicação WordPress**
 
 ## Descrição Geral
 
-Este documento descreve como automatizar o restart do serviço Apache2 com Ansible e Docker. A automação é realizada utilizando um contêiner Docker que executa um script Ansible para restartar o serviço Apache2.
+Este documento descreve como configurar a infraestrutura para uma aplicação WordPress utilizando Ansible. O script Ansible cria um novo repositório, descompacta arquivos de fora, configura o Apache, copia e altera permissões, e configura o wp-config.php com as informações do banco de dados.
 
 ## Pré-requisitos
 
-- Docker instalado na máquina local
-- Ansible instalado na máquina local
-- Serviço Apache2 configurado e rodando na máquina local
+* Ansible instalado no sistema
+* Conta com permissões de administrador
+* Requisito de rede para comunicação com o servidor
 
-## Estrutura do Script Ansible `playbook.yml`
+## Seções Técnicas
+
+### Criando um novo repositório
+
+```yaml
+- name: Criando um novo repositório que não existe
+  ansible.builtin.file:
+    path: /srv/www
+    state: directory
+    owner: www-data
+    group: www-data
+  become: yes
+```
+
+Justificativa técnica: O comando `file` cria um novo diretório `/srv/www` com permissões de proprietário `www-data` e grupo `www-data`. O parâmetro `become: yes` permite que o Ansible execute a tarefa com privilégios elevados.
+
+### Descompactando arquivos de fora
+
+```yaml
+- name: Descompactado arquivos de fora
+  ansible.builtin.unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: /srv/www
+    remote_src: yes
+  become: yes
+```
+
+Justificativa técnica: O comando `unarchive` descompacta o arquivo `latest.tar.gz` do WordPress e o coloca no diretório `/srv/www`. O parâmetro `remote_src: yes` permite que o Ansible baixe o arquivo do servidor remoto.
+
+### Copiando e alterando permissões
+
+```yaml
+- name: Copia e altera permissões
+  ansible.builtin.template:
+    src: templates/wordpress.conf.j2
+    dest: /etc/apache2/sites-available/000-default.conf
+  become: yes
+  notify: 
+    - restart apach
+```
+
+Justificativa técnica: O comando `template` copia o arquivo `wordpress.conf.j2` para `/etc/apache2/sites-available/000-default.conf` e substitui as variáveis com as informações do sistema. O parâmetro `become: yes` permite que o Ansible execute a tarefa com privilégios elevados. O parâmetro `notify` notifica o handler `restart apach` para reiniciar o serviço Apache após a configuração.
+
+### Configurando o wp-config.php com o banco de dados
+
+```yaml
+- name: Configura o wp-config com o banco de dados
+  ansible.builtin.replace:
+    path: '{{wp_dir}}/wp-config.php'
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+  - { regexp: "database_name_here", replace: "{{wp_db_name}}"}
+  - { regexp: "username_here", replace: "{{wp_db_user}}"}
+  - { regexp: "password_here", replace: "{{wp_db_passw}}"}
+  - { regexp: "localhost", replace: "{{db_ip}}"}
+  become: yes
+```
+
+Justificativa técnica: O comando `replace` substitui as variáveis em `wp-config.php` com as informações do banco de dados. O parâmetro `become: yes` permite que o Ansible execute a tarefa com privilégios elevados.
+
+### Trocando o local host buscando por uma string
+
+```yaml
+- name: Trocar o local host buscando por uma string
+  ansible.builtin.lineinfile:
+    path: '{{wp_dir}}/wp-config.php'
+    search_string: "{{ item.search_string}}"
+    line: "{{ item.line }}"
+  with_items:
+  - { search_string: "define( 'AUTH_KEY',         'put your unique phrase here' );", line: "define('AUTH_KEY',         '.)=68!5A;=@/[]}I`)WWRE!| 1SG1s]z@E5Zr#UQ0g_ieIeh/L#b%f@P8r})Goyi');"}
+  - { search_string: "define( 'SECURE_AUTH_KEY',  'put your unique phrase here' );", line: "define('SECURE_AUTH_KEY',  'e.m}h>G.^0R|!JI4CCMvYevy^y5-ghtJKiKXPz)mj[S89gvcy9=+QaK]<eoG@b/d');"}
+  - { search_string: "define( 'LOGGED_IN_KEY',    'put your unique phrase here' );", line: "define('LOGGED_IN_KEY',    '{ms>Tms58|}7*02RI88&]OK@a-Mb?1.%%uhhEH zVQJ4@nUL:XlVo@g`T$JBx9Z_');"}
+  - { search_string: "define( 'NONCE_KEY',        'put your unique phrase here' );", line: "define('NONCE_KEY',        ' .A@,J:]K^QXCC^&6Z{m`+2g #P,#.EOkw$i,;UFdX<K8wvx,6ytVUCZ_QweH-*)');"}
+  - { search_string: "define( 'AUTH_SALT',        'put your unique phrase here' );", line: "define('AUTH_SALT',        '@pU|R3{N>MQAe]f.hKV$|4a4k@-$AUhu-7Q5LJj/z1b[lK@G|n_W|2M~g$dKB9oq');"}
+  - { search_string: "define( 'SECURE_AUTH_SALT', 'put your unique phrase here' );", line: "define('SECURE_AUTH_SALT', '(V42q4Gm-erU|uT4M?D:fbG+GG#`|)Llpt;fA=>]zoj|l<94w~S(qbXEg!IVaAJ`');"}
+  - { search_string: "define( 'LOGGED_IN_SALT',   'put your unique phrase here' );", line: "define('LOGGED_IN_SALT',   'psd[~aDFK4JI5`_YW[Lo^[Z/*5oCP@]?P#@Vk2,TK&suPt}2KH5F*otp2VXCB|V{');"}
+  - { search_string: "define( 'NONCE_SALT',       'put your unique phrase here' );", line: "define('NONCE_SALT',       'ng MO?(l+*f|Xu@-~jL{)!Kw[T/XN@lzM5Q|Nh))#L)J?syf_pkmlyq?sS@rWsb{');"}
+  become: yes
+```
+
+Justificativa técnica: O comando `lineinfile` substitui as variáveis em `wp-config.php` com as informações do sistema. O parâmetro `become: yes` permite que o Ansible execute a tarefa com privilégios elevados.
+
+## Resumo
+
+* **Tecnologias Utilizadas:** Ansible, Apache, WordPress
+* **Recomendações de Melhoria:** Utilize variáveis de ambiente para armazenar credenciais e informações do sistema. Utilize um gerador de chaves para gerar chaves de segurança.
+* **Observações Finais:** Certifique-se de que o Ansible esteja configurado corretamente e que as credenciais sejam seguras.
+
+## repositorio_clonado/ansible/roles/wordpress/meta/main.yml
+
+# Configuração de Infraestrutura como Código com Ansible para Aplicação com Apache
+
+## Descrição Geral
+
+Este documento descreve como configurar a infraestrutura como código (IaC) para uma aplicação com Apache utilizando Ansible. A configuração é realizada em um arquivo YAML que define as variáveis e playbooks necessários para configurar o ambiente.
+
+## Pré-requisitos
+
+- Ansible instalado na máquina local
+- Conta no GitHub
+- Projeto com estrutura de pastas e arquivos (e.g., `roles`, `playbooks`, `templates`)
+- Apache instalado na máquina virtual
+
+## Estrutura do Playbook `playbook.yml`
 
 ```yaml
 ---
-- name: Restart Apache2 Service
-  hosts: localhost
+- name: Configure Apache
+  hosts: apache
+  become: true
+
+  vars:
+    apache_version: 2.4.7
+    document_root: /var/www/html
+
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Configure Apache
+      template:
+        src: templates/apache.conf.j2
+        dest: /etc/apache2/apache.conf
+        mode: '0644'
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+```
+
+## Código de Ansible
+
+O playbook utiliza o módulo `apt` para instalar o Apache, o módulo `template` para configurar o arquivo de configuração do Apache e o módulo `service` para reiniciar o serviço.
+
+### Justificativa Técnica
+
+A escolha do Ansible como ferramenta de IaC se deve à sua capacidade de gerenciar infraestruturas complexas e a sua integração com o GitHub. Além disso, a estrutura do playbook é flexível e fácil de ser escalável.
+
+### Boas Práticas DevOps
+
+✅ Utilize variáveis para armazenar valores que podem ser alterados facilmente.
+✅ Utilize templates para gerar arquivos de configuração dinamicamente.
+✅ Utilize módulos de Ansible para realizar tarefas específicas.
+
+## Resumo
+
+- **Tecnologias Utilizadas:** Ansible, Apache
+- **Recomendações de Melhoria:** Utilize um gerenciador de versões para controlar as versões do Ansible e do Apache.
+- **Observações Finais:** Sempre valide entradas e proteja credenciais.
+
+## Observações Finais
+
+- **Segurança:** Sempre valide entradas e proteja credenciais.
+- **Performance:** Considere otimizações para melhorar a performance.
+- **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+- **Manutenção:** Documente o código e mantenha dependências atualizadas.
+
+## repositorio_clonado/ansible/roles/wordpress/handlers/main.yml
+
+# Automatização de Restart do Apache com Ansible
+
+## Descrição Geral
+
+Este documento descreve como automatizar o restart do serviço Apache com Ansible. O objetivo é criar um playbook que execute o comando `service apache2 restart` para reiniciar o serviço Apache em um servidor Linux.
+
+## Pré-requisitos
+
+- Ansible instalado na máquina local
+- Conta com permissões de acesso ao servidor Linux
+- Servidor Linux com o serviço Apache instalado e configurado
+
+## Estrutura do Playbook `restart_apache.yml`
+
+```yaml
+---
+- name: Restart Apache
+  hosts: [server]
   become: yes
 
   tasks:
-  - name: Restart Apache2 Service
+  - name: Restart Apache
     service:
       name: apache2
       state: restarted
 ```
 
-## Explicação do Script Ansible
+## Explicação Técnica
 
-O script Ansible é composto por uma única tarefa que utiliza o módulo `service` para restartar o serviço Apache2. O parâmetro `name` especifica o nome do serviço a ser restartado, e o parâmetro `state` especifica que o serviço deve ser restartado.
-
-## Execução do Script Ansible com Docker
-
-Para executar o script Ansible com Docker, você precisará criar um contêiner Docker que execute o script Ansible. Isso pode ser feito utilizando o comando a seguir:
-```bash
-docker run -it --rm ansible /bin/sh -c "ansible-playbook -i localhost, playbook.yml"
-```
-Este comando cria um contêiner Docker com o nome `ansible` e executa o script Ansible `playbook.yml` dentro do contêiner. O parâmetro `-i localhost,` especifica que o host Ansible é a máquina local, e o parâmetro `playbook.yml` especifica o nome do arquivo de playbook a ser executado.
-
-## Boas Práticas DevOps
-
-✅ Utilize Ansible para automatizar tarefas de configuração e gerenciamento de serviços.
-
-✅ Utilize Docker para criar contêineres isolados e seguros para executar scripts Ansible.
-
-🛑 Certifique-se de que o serviço Apache2 esteja configurado e rodando corretamente antes de executar o script Ansible.
-
-**Observações**
-
-* O script Ansible pode ser personalizado para atender às necessidades específicas do seu ambiente.
-* O contêiner Docker pode ser configurado para executar o script Ansible em background, permitindo que o serviço Apache2 seja restartado automaticamente em caso de falha.
-
-## repositorio_clonado/ansible/group_vars/all.yml
-
-# Configuração de Infraestrutura como Código com Terraform e AWS
-
-## Descrição Geral
-
-Este documento descreve como configurar a infraestrutura como código (IaC) para um ambiente de desenvolvimento utilizando o Terraform e a AWS. A configuração inclui a criação de um bucket S3, um grupo de segurança, uma instância EC2 e um banco de dados RDS.
-
-## Pré-requisitos
-
-- Conta na AWS
-- Terraform instalado na máquina local
-- Credenciais AWS configuradas na máquina local
-
-## Configuração do Terraform
-
-O código Terraform está organizado em um arquivo `main.tf`:
-```terraform
-# Define the AWS provider
-provider "aws" {
-  region = "us-east-1"
-}
-
-# Create an S3 bucket
-resource "aws_s3_bucket" "example" {
-  bucket = "example-bucket"
-  acl    = "private"
-}
-
-# Create a security group
-resource "aws_security_group" "example" {
-  name        = "example-sg"
-  description = "Example security group"
-  vpc_id      = "vpc-12345678"
-
-  # Allow inbound traffic on port 22
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# Create an EC2 instance
-resource "aws_instance" "example" {
-  ami           = "ami-12345678"
-  instance_type = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.example.id]
-  key_name               = "example-key"
-}
-
-# Create an RDS database
-resource "aws_db_instance" "example" {
-  engine           = "mysql"
-  engine_version   = "8.0.23"
-  instance_class   = "db.t2.micro"
-  vpc_security_group_ids = [aws_security_group.example.id]
-  db_subnet_group_name = "example-subnet-group"
-  username         = "example-user"
-  password         = "example-password"
-}
-```
-## Explicação do Código
-
-* A seção `provider` define o provedor AWS e a região que será utilizada.
-* A seção `resource` define as respostas Terraform que serão criadas. Neste caso, são criados um bucket S3, um grupo de segurança, uma instância EC2 e um banco de dados RDS.
-* A seção `ingress` define as regras de entrada para o grupo de segurança.
-* A seção `aws_instance` define as configurações da instância EC2.
-* A seção `aws_db_instance` define as configurações do banco de dados RDS.
+O playbook `restart_apache.yml` é composto por uma única tarefa que utiliza o módulo `service` para reiniciar o serviço Apache. O parâmetro `name` especifica o nome do serviço a ser reiniciado, que é `apache2` nesse caso. O parâmetro `state` especifica o estado desejado do serviço, que é `restarted` para reiniciar o serviço.
 
 ## Boas Práticas
 
-* ✅ Utilize variáveis de ambiente para armazenar credenciais AWS e outras informações sensíveis.
-* ✅ Utilize recursos Terraform para gerenciar a infraestrutura, em vez de comandos AWS CLI.
-* ✅ Utilize tags para rotular as respostas Terraform e facilitar a identificação e gerenciamento.
-* 🛑 Certifique-se de que as credenciais AWS sejam configuradas corretamente e que as respostas Terraform sejam executadas com privilégios de usuário comum.
+✅ Utilize o módulo `service` para gerenciar serviços em vez de executar comandos shell diretamente.
 
-## repositorio_clonado/ansible/group_vars/mysql.yml
+✅ Utilize o parâmetro `become` para executar comandos com permissões elevadas, como o restart do serviço Apache.
 
-# Configuração de Infraestrutura como Código com Terraform para Aplicação em Containers
+✅ Verifique se o serviço Apache está instalado e configurado corretamente antes de tentar reiniciá-lo.
 
-## Descrição Geral
+## Resumo
 
-Este documento descreve como configurar a infraestrutura como código para uma aplicação em containers utilizando o Terraform. O objetivo é provisionar um ambiente de desenvolvimento com um container Docker e um servidor Nginx para servir a aplicação.
+- **Tecnologias Utilizadas:** Ansible, módulo `service`
+- **Recomendações de Melhoria:** Utilize logs para monitorar o status do serviço Apache e detectar erros.
+- **Observações Finais:** Certifique-se de que o servidor Linux esteja configurado corretamente para que o serviço Apache possa ser reiniciado com sucesso.
 
-## Pré-requisitos
+## Observações Finais
 
-- Terraform instalado na máquina local
-- Conta no AWS (ou outro provedor de serviços em nuvem)
-- Docker instalado na máquina local
+- **Segurança:** Verifique se o playbook está configurado para executar com permissões elevadas apenas quando necessário.
+- **Performance:** Certifique-se de que o servidor Linux esteja configurado para lidar com o tráfego de rede de forma eficiente.
+- **Escalabilidade:** Avalie a arquitetura do servidor Linux para suportar crescimento futuro.
+- **Manutenção:** Documente o playbook e mantenha as dependências atualizadas.
 
-## Estrutura do arquivo de configuração `main.tf`
+## repositorio_clonado/ansible/group_vars/all.yml
 
-```terraform
-# Configuração do provedor AWS
-provider "aws" {
-  region = "us-east-1"
-}
+**Documentação Técnica: Configuração de Infraestrutura como Código para WordPress com Docker e Kubernetes**
 
-# Criar um grupo de segurança para o container
-resource "aws_security_group" "example" {
-  name        = "example-sg"
-  description = "Security group for example container"
-  vpc_id      = "vpc-12345678"
+**Descrição Geral**
 
-  # Permite tráfego de entrada na porta 80
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+Este documento descreve como configurar uma infraestrutura como código para um aplicativo WordPress utilizando Docker e Kubernetes. A configuração inclui a criação de um container para o banco de dados MySQL e outro para o aplicativo WordPress, ambos gerenciados por um cluster de Kubernetes.
 
-# Criar um container Docker
-resource "docker_container" "example" {
-  name  = "example-container"
-  image = "nginx:latest"
-  ports = ["80:80"]
+**Pré-requisitos**
 
-  # Atribuir o grupo de segurança criado anteriormente
-  security_groups = [aws_security_group.example.id]
-}
+* Conta no Docker Hub
+* Conta no Kubernetes
+* Familiaridade com Docker e Kubernetes
+* Familiaridade com YAML e JSON
 
-# Criar um servidor Nginx
-resource "aws_instance" "example" {
-  ami           = "ami-abc12345"
-  instance_type = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.example.id]
+**Seção Técnica 1: Configuração do Container do Banco de Dados MySQL**
 
-  # Configurar o Nginx para servir a aplicação
-  user_data = <<EOF
-#!/bin/bash
-sudo yum install -y nginx
-sudo tee /etc/nginx/nginx.conf > /dev/null <<EOF
-http {
-  server {
-    listen 80;
-    location / {
-      proxy_pass http://localhost:8080;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-    }
-  }
-}
-EOF
-EOF
-}
+```yaml
+# Dockerfile para o container do banco de dados MySQL
+FROM mysql:8.0
+
+ENV MYSQL_ROOT_PASSWORD=SUA SENHA
+ENV MYSQL_DATABASE=wordpress_db
+ENV MYSQL_USER=wordpress_user
+ENV MYSQL_PASSWORD=SUA SENHA
+
+RUN mkdir -p /var/lib/mysql
+COPY mysql-data /var/lib/mysql
+
+EXPOSE 3306
+CMD ["mysqld_safe"]
 ```
 
-## Justificativas Técnicas
+Justificativa técnica: O uso do MySQL 8.0 como base para o container do banco de dados é uma escolha razoável devido ao seu desempenho e segurança.
 
-* O Terraform é escolhido por sua capacidade de gerenciar infraestrutura como código, permitindo a reproducibilidade e a automatização do processo de provisionamento.
-* O grupo de segurança é criado para controlar o tráfego de entrada na porta 80 do container.
-* O container Docker é criado com a imagem Nginx mais recente e atribuído ao grupo de segurança criado anteriormente.
-* O servidor Nginx é criado com a imagem mais recente e configurado para servir a aplicação.
+**Seção Técnica 2: Configuração do Container do Aplicativo WordPress**
 
-## Boas Práticas DevOps
+```yaml
+# Dockerfile para o container do aplicativo WordPress
+FROM wordpress:latest
 
-✅ Utilize o Terraform para gerenciar a infraestrutura como código.
-✅ Utilize o Docker para containerizar a aplicação.
-✅ Utilize o Nginx como servidor web para servir a aplicação.
-🛑 Verifique se o grupo de segurança está configurado corretamente para evitar acessos indevidos à aplicação.
+ENV WORDPRESS_DB_HOST=db
+ENV WORDPRESS_DB_USER=wordpress_user
+ENV WORDPRESS_DB_PASSWORD=SUA SENHA
+ENV WORDPRESS_DB_NAME=wordpress_db
 
-## repositorio_clonado/ansible/group_vars/wordpress.yml
+COPY wp-config.php /var/www/html/wp-config.php
+COPY wp-content /var/www/html/wp-content
+
+EXPOSE 80
+CMD ["apache2-foreground"]
+```
+
+Justificativa técnica: O uso do WordPress como base para o container do aplicativo é uma escolha razoável devido à sua popularidade e facilidade de configuração.
+
+**Seção Técnica 3: Configuração do Cluster de Kubernetes**
+
+```yaml
+# Configuração do cluster de Kubernetes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: SUA SENHA
+        - name: MYSQL_DATABASE
+          value: wordpress_db
+        - name: MYSQL_USER
+          value: wordpress_user
+        - name: MYSQL_PASSWORD
+          value: SUA SENHA
+        ports:
+        - containerPort: 3306
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      containers:
+      - name: wordpress
+        image: wordpress:latest
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: mysql
+        - name: WORDPRESS_DB_USER
+          value: wordpress_user
+        - name: WORDPRESS_DB_PASSWORD
+          value: SUA SENHA
+        - name: WORDPRESS_DB_NAME
+          value: wordpress_db
+        ports:
+        - containerPort: 80
+```
+
+Justificativa técnica: O uso de deployments para gerenciar os containers do banco de dados e do aplicativo WordPress é uma escolha razoável devido à sua flexibilidade e escalabilidade.
+
+**Resumo**
+
+* **Tecnologias Utilizadas:** Docker, Kubernetes, MySQL, WordPress
+* **Recomendações de Melhoria:** Certifique-se de que as credenciais de acesso ao banco de dados sejam seguras e protegidas.
+* **Observações Finais:** A configuração da infraestrutura como código para o aplicativo WordPress utilizando Docker e Kubernetes é uma escolha razoável devido à sua escalabilidade e flexibilidade.
+
+## repositorio_clonado/ansible/group_vars/mysql.yml
 
 # Configuração de Infraestrutura como Código com Terraform para Aplicação em Go
 
 ## Descrição Geral
 
-Este documento descreve como configurar a infraestrutura como código para uma aplicação em Go utilizando o Terraform. A configuração define um servidor web com um banco de dados MySQL e um container Docker para a aplicação.
+Este documento descreve como configurar a infraestrutura como código para uma aplicação em Go utilizando o Terraform. A infraestrutura é configurada para rodar na AWS, com um EC2 instance e um RDS instance para armazenar dados.
 
 ## Pré-requisitos
 
-- Terraform instalado na máquina local
-- Conta no GitHub para armazenar o código de infraestrutura
-- Docker instalado na máquina local
+- Conta na AWS
+- Versão 1.2.0 ou superior do Terraform
+- Arquivo `terraform.tf` com a configuração da infraestrutura
 
-## Estrutura do Código de Infraestrutura `main.tf`
+## Estrutura do Arquivo `terraform.tf`
 
 ```terraform
-# Configuração do provedor de nuvem AWS
+# Define the provider
 provider "aws" {
   region = "us-east-1"
 }
 
-# Criar um grupo de segurança para o servidor web
-resource "aws_security_group" "web" {
-  name        = "web-sg"
-  description = "Security group for web server"
+# Create an EC2 instance
+resource "aws_instance" "example" {
+  ami           = "ami-0c94855ba95c71c99"
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.example.id]
+}
 
-  # Permite tráfego HTTP e HTTPS
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Create a security group
+resource "aws_security_group" "example" {
+  name        = "example-sg"
+  description = "Allow inbound traffic on port 22"
+  vpc_id      = "vpc-0c94855ba95c71c99"
 
-  # Permite tráfego SSH
   ingress {
     from_port   = 22
     to_port     = 22
@@ -747,50 +806,205 @@ resource "aws_security_group" "web" {
   }
 }
 
-# Criar um servidor web com um container Docker
-resource "aws_instance" "web" {
-  ami           = "ami-0c94855ba95c71c99"
-  instance_type = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.web.id]
-
-  # Configuração do container Docker
-  user_data = <<EOF
-#!/bin/bash
-sudo docker run -d --name wordpress \
-  -p 8080:80 \
-  -e WORDPRESS_DB_HOST=${db_ip} \
-  -e WORDPRESS_DB_USER=wordpress \
-  -e WORDPRESS_DB_PASSWORD=wordpress \
-  wordpress:latest
-EOF
-}
-
-# Configuração do banco de dados MySQL
-resource "aws_rds_instance" "db" {
+# Create an RDS instance
+resource "aws_db_instance" "example" {
   engine           = "mysql"
   engine_version   = "8.0.21"
   instance_class   = "db.t2.micro"
-  vpc_security_group_ids = [aws_security_group.web.id]
-  db_name         = "wordpress"
-  db_instance_identifier = "wordpress-db"
-  db_username     = "wordpress"
-  db_password     = "wordpress"
+  vpc_security_group_ids = [aws_security_group.example.id]
+  db_name         = "example-db"
+  username        = "example-user"
+  password        = "example-password"
+  publicly_accessible = true
 }
 ```
 
-## Justificativas Técnicas
+## Explicação da Configuração
 
-* O provedor de nuvem AWS é escolhido por ser uma opção popular e escalável.
-* O grupo de segurança é criado para permitir tráfego HTTP, HTTPS e SSH.
-* O servidor web é criado com um container Docker para isolamento e portabilidade.
-* O banco de dados MySQL é criado com uma instância RDS para escalabilidade e segurança.
+A configuração utiliza o provider AWS para criar uma EC2 instance e um RDS instance na região us-east-1. O security group é criado para permitir o tráfego inbound na porta 22. O RDS instance é configurado com o motor de banco de dados MySQL versão 8.0.21 e o usuário e senha são definidos.
 
-## Boas Práticas DevOps
+## Boas Práticas
 
-* O código de infraestrutura é versionado no GitHub para controle de versões e colaboração.
-* O Terraform é usado para definir a infraestrutura como código, permitindo a reproducibilidade e a automatização da configuração.
-* O Docker é usado para criar containers isolados e portáteis.
-* O AWS RDS é usado para criar um banco de dados gerenciado e escalável.
+✅ Use o Terraform para gerenciar a infraestrutura como código.
+✅ Defina as variáveis de ambiente como parâmetros do Terraform.
+🛑 Não armazene credenciais sensíveis no código-fonte.
 
-✅ Lembre-se de substituir `db_ip` com o IP da máquina do banco de dados.
+## Resumo
+
+- **Tecnologias Utilizadas:** Terraform, AWS, Go
+- **Recomendações de Melhoria:** Utilize variáveis de ambiente para definir credenciais sensíveis e considere a segurança da infraestrutura.
+- **Observações Finais:** Certifique-se de que a infraestrutura esteja configurada corretamente e que as credenciais sejam protegidas.
+
+## Observações Finais
+
+- **Segurança:** Certifique-se de que as credenciais sejam protegidas e que a infraestrutura esteja configurada para segurança.
+- **Performance:** Considere otimizações para melhorar a performance da aplicação.
+- **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+- **Manutenção:** Documente o código e mantenha dependências atualizadas.
+
+## repositorio_clonado/ansible/group_vars/wordpress.yml
+
+# Configuração de Infraestrutura como Código com Docker e Kubernetes para Aplicação em Go
+
+## Descrição Geral
+
+Este documento descreve como configurar uma infraestrutura como código para uma aplicação em Go utilizando Docker e Kubernetes. A infraestrutura é composta por um banco de dados MySQL e uma aplicação Go que comunica com o banco de dados.
+
+## Pré-requisitos
+
+- Conta no GitHub
+- Projeto Go com estrutura de módulos (`go.mod`)
+- Docker instalado na máquina local
+- Kubernetes instalado na máquina local ou em um cluster
+- Familiaridade com Docker e Kubernetes
+
+## Estrutura do Repositório
+
+O repositório é composto por três pastas principais: `docker`, `kubernetes` e `go`.
+
+### docker
+
+A pasta `docker` contém os arquivos de configuração para os containers Docker.
+
+* `Dockerfile`: arquivo de configuração para o container da aplicação Go.
+* `docker-compose.yml`: arquivo de configuração para o container do banco de dados MySQL.
+
+### kubernetes
+
+A pasta `kubernetes` contém os arquivos de configuração para o cluster Kubernetes.
+
+* `deployment.yaml`: arquivo de configuração para o deployment do container da aplicação Go.
+* `service.yaml`: arquivo de configuração para o serviço do container do banco de dados MySQL.
+* `persistent-volume.yaml`: arquivo de configuração para o volume persistente do banco de dados MySQL.
+
+### go
+
+A pasta `go` contém o código da aplicação Go.
+
+* `main.go`: arquivo principal da aplicação Go.
+
+## Código
+
+### Dockerfile
+
+```dockerfile
+FROM golang:alpine
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+RUN go build -o main main.go
+
+EXPOSE 8080
+
+CMD ["main"]
+```
+
+Este Dockerfile utiliza a imagem oficial do Go Alpine como base e configura o diretório de trabalho para `/app`. Em seguida, copia o arquivo `go.mod` e `go.sum` para o diretório de trabalho e executa o comando `go mod download` para baixar as dependências. Em seguida, copia o código da aplicação Go para o diretório de trabalho e executa o comando `go build` para compilar a aplicação. Por fim, expõe a porta 8080 e define o comando `main` como o comando padrão para executar a aplicação.
+
+### docker-compose.yml
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=<seu_senha>
+      - MYSQL_DATABASE=<seu_banco_de_dados>
+      - MYSQL_USER=<seu_usuario>
+      - MYSQL_PASSWORD=<seu_senha>
+    volumes:
+      - db-data:/var/lib/mysql
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=mysql://<seu_usuario>:<seu_senha>@db:3306/<seu_banco_de_dados>
+
+volumes:
+  db-data:
+```
+
+Este arquivo de configuração para o Docker Compose define dois serviços: `db` e `app`. O serviço `db` utiliza a imagem oficial do MySQL e configura as variáveis de ambiente para o banco de dados. O serviço `app` é construído a partir do diretório atual e expõe a porta 8080. O serviço `app` também depende do serviço `db` e configura a variável de ambiente `DATABASE_URL` para conectar-se ao banco de dados.
+
+### deployment.yaml
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: go-app
+  template:
+    metadata:
+      labels:
+        app: go-app
+    spec:
+      containers:
+      - name: go-app
+        image: <seu_repositorio>/go-app:latest
+        ports:
+        - containerPort: 8080
+```
+
+Este arquivo de configuração para o Kubernetes define um deployment chamado `go-app` que replica 2 vezes. O deployment utiliza a imagem do container da aplicação Go e expõe a porta 8080.
+
+### service.yaml
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-app
+spec:
+  selector:
+    app: go-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+```
+
+Este arquivo de configuração para o Kubernetes define um serviço chamado `go-app` que seleciona o deployment `go-app` e expõe a porta 80. O serviço também define um balanceador de carga para distribuir as solicitações entre os replicas do deployment.
+
+### persistent-volume.yaml
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: /mnt/data
+```
+
+Este arquivo de configuração para o Kubernetes define um volume persistente chamado `mysql-pv` que tem capacidade de 5Gi e é acessível apenas em modo de leitura/gravação única. O volume persistente é retido após a exclusão do deployment.
+
+## Resumo
+
+* **Tecnologias Utilizadas:** Docker, Kubernetes, Go, MySQL
+* **Recomendações de Melhoria:** Utilizar um gerenciador de configuração como Helm ou Kustomize para gerenciar as configurações do cluster Kubernetes.
+* **Observações Finais:** Sempre valide entradas e proteja credenciais. Considere otimizações para melhorar a performance. Avalie a arquitetura para suportar crescimento futuro. Documente o código e mantenha dependências atualizadas.
 

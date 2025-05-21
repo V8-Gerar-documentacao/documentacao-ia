@@ -86,6 +86,22 @@ jobs:
       - name: Run tests
         run: go test ./...
 
+
+Ao final de toda a análise do repositório ou arquivo, gere um resumo com as principais conclusões e recomendações, incluindo sobre o que se trata o repositório, quais tecnologias estão sendo utilizadas e se há alguma recomendação de melhoria.
+---
+
+## Resumo
+- **Tecnologias Utilizadas:** Liste as principais tecnologias, frameworks e ferramentas.
+- **Recomendações de Melhoria:** Sugira melhorias ou boas práticas que podem ser aplicadas.
+- **Observações Finais:** Qualquer outra informação relevante.
+---
+
+## Observações Finais
+- **Segurança:** Sempre valide entradas e proteja credenciais.
+- **Performance:** Considere otimizações para melhorar a performance.
+- **Escalabilidade:** Avalie a arquitetura para suportar crescimento futuro.
+- **Manutenção:** Documente o código e mantenha dependências atualizadas.
+
 Script ou código:
 {conteudo}
 """
