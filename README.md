@@ -13,8 +13,7 @@ Este repositório contém scripts e ferramentas que utilizam Inteligência Artif
   - Terraform
   - Ansible
   - Dockerfile
-  - Kubernetes YAML
-  - GitHub Actions
+  - Arquivos YAML
   - Shell Script
 
 ---
@@ -22,8 +21,4 @@ Este repositório contém scripts e ferramentas que utilizam Inteligência Artif
 ## 🛠 Tecnologias Utilizadas
 
 - Python + Groq
-- Ferramentas DevOps
-- GitHub Actions
 - Markdown para estruturação da documentação
-
-
